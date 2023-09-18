@@ -1,11 +1,12 @@
+#include <stdint.h>
 #include <Arduino.h>
 #include "encoder.h"
-#include "Analog_out.h"
+#include "Digital_out.h"
 
 bool c1_hi = false;
 bool clockwise = false;
 
-int number_us = 0;
+uint32_t number_us = 0;
 int time_between_pulses = 0;
 double speed_secpulse = 0;
 
@@ -13,28 +14,39 @@ double tau_speed = 1470 * 0.63;
 int tau_counter;
 double tau = 0;
 
+int pwm_counter = 0;
+int pmw_full_period = 10; //full period pwm =
+int pmw_off_time = (1-0.3) * pmw_full_period;
+bool pwm_current_state = false;
+
+
 Encoder encoder(2, 3); //c1: D2, c2: D3
-Analog_out motor(2);  //pin D10
+Digital_out motor(2);  //pin D10
 
 int main()
 {
   Serial.begin(9600);
  
-  motor.init(2000);
-  motor.set(0.1);
+  motor.init();
   encoder.init();
 
   tau_counter = 0;
 
   TCCR1A = 0; // set timer1 to normal operation (all bits in control registers A and B set to zero)
   TCCR1B = 0;
-  TCNT1 = 0; 
-  OCR1A = 160/8 - 1; // 10 us
-  TCCR1A |= (1 << WGM12);
-  TCCR1B |= (1 << WGM12);
-  TIMSK1 |= (1 << OCIE1A);
-  TIMSK1 |= (1 << OCIE1B);
-  TCCR1B |= (1 << CS11);
+  TCNT1 = 0; // initialize counter value to 0
+  OCR1A = 160/8 - 1; // 10us
+  TCCR1B |= (1 << WGM12); // clear the timer on compare match A
+  TIMSK1 |= (1 << OCIE1A); // set interrupt on compare match A
+  TCCR1B |= (1 << CS11); // set prescaler to 8 and start the time
+
+  TCCR2A = 0;
+  TCCR2B = 0;
+  TCNT2 = 0;
+  OCR2A = 160/8 - 1; 
+  TCCR2A |= (1 << WGM12); // Configure Timer 2 for CTC mode
+  TIMSK2 |= (1 << OCIE2A); // Enable the Timer 2 compare match A interrupt
+  TCCR2B |= (1 << CS12) | (1 << CS10);
 
   DDRD &= ~(1 << DDD2); 
   PORTD |= (1 << PORTD2);
@@ -45,7 +57,6 @@ int main()
 
   while(1)
   {
-    _delay_us(10);
     Serial.println(speed_secpulse);
 
     if(speed_secpulse == double{0})
@@ -57,17 +68,16 @@ int main()
     if(c1_hi)
     {
       encoder.updateCounter(clockwise);
-     
-      c1_hi = false;
-      clockwise = false;
-
       speed_secpulse = double{100000}/time_between_pulses;
 
       if(speed_secpulse >= tau_speed && tau==0)
       {
         tau = tau_counter;
-        Serial.println(tau);  // -> Multiply by 10 to get in us
+        // Serial.println(tau);  // -> Multiply by 10 to get in us
       }
+
+      c1_hi = false;  //Turn flags down
+      clockwise = false;
     }
   }
 
@@ -89,11 +99,20 @@ ISR (INT0_vect)
 ISR (TIMER1_COMPA_vect)
 {
   number_us++;
-  motor.pin.set_hi();
 }
 
-ISR(TIMER1_COMPB_vect)
+ISR(TIMER2_COMPA_vect)
 {
-  // led.set_lo();
-  motor.pin.set_lo();
+  pwm_counter++;
+  
+  if(pwm_counter == (pmw_full_period-pmw_off_time))
+  {
+    motor.set_lo(); //end of the cycle
+  }
+  
+  else if (pwm_counter == pmw_full_period)
+  {
+    pwm_counter = 0;
+    motor.set_hi(); //start the cycle again
+  }
 }
