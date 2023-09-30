@@ -7,12 +7,16 @@
 class MotorController
 {
     public:
-        MotorController(int pinNumber);
+        MotorController(int pinNumber, int target);
         void init(int period_ms = 1000);
         void set(float duty_cycle);
+        void updatePwm(int currentSpeed);
+        void brake();
 
     private:
         Timer_msec timer;
+        int speedTarget;
+        double kp;
 
     public:    
         Digital_out pin;

@@ -7,7 +7,15 @@ Timer_msec::Timer_msec()
 }
 
 void Timer_msec::init(int period_ms)
-{ 
+{
+    TCCR2A = 0; // set timer2 to normal operation (all bits in control register A set to zero)
+    TCCR2B = 0; // set timer2 to normal operation (all bits in control register B set to zero)
+    TCNT2 = 0; // initialize counter value to 0
+    OCR2A = 160 / 8 - 1; // 10us
+    TCCR2A |= (1 << WGM21); // clear the timer on compare match A
+    TIMSK2 |= (1 << OCIE2A); // set interrupt on compare match A
+    TCCR2B |= (1 << CS21); // set prescaler to 8 and start the timer
+
     TCCR1A = 0; // set timer1 to normal operation
     TCCR1B = 0; 
     TCNT1 = 0; // initialize counter value to 0
@@ -19,6 +27,14 @@ void Timer_msec::init(int period_ms)
 
 void Timer_msec::init(int period_ms, float duty_cycle)
 {
+    TCCR2A = 0; // set timer2 to normal operation (all bits in control register A set to zero)
+    TCCR2B = 0; // set timer2 to normal operation (all bits in control register B set to zero)
+    TCNT2 = 0; // initialize counter value to 0
+    OCR2A = 160 / 8 - 1; // 10us
+    TCCR2A |= (1 << WGM21); // clear the timer on compare match A
+    TIMSK2 |= (1 << OCIE2A); // set interrupt on compare match A
+    TCCR2B |= (1 << CS21); // set prescaler to 8 and start the timer
+
     TCCR1A = 0; // set timer1 to normal operation (all bits in control registers A and B set to zero)
     TCCR1B = 0; 
     TCNT1 = 0;
