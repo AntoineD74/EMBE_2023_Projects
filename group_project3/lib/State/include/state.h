@@ -1,5 +1,7 @@
 #pragma once
 
+#include "motor_controller.h"
+
 class StateManager;
 
 /**
@@ -24,9 +26,8 @@ class State
         }
 
         virtual void on_entry() = 0;
-
-        virtual void handle_commands() = 0;
-
-        virtual void process_commands() = 0;
+        virtual void action_looped(MotorController *motor) = 0;
+        // virtual void handle_commands() = 0;
+        // virtual void process_commands() = 0;
 
 };
