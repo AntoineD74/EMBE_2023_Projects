@@ -6,8 +6,7 @@
 class StoppedState : public State {
 public:
     void on_entry() override;
-    void handle_commands() override;
-    void process_commands() override;
+    void action_looped(MotorController *motor) override;
 };
 
 #endif

@@ -1,56 +1,63 @@
 #include <Arduino.h>
-#include<StateManger.h>
+#include <StateManager.h>
 
 
+StateManager::StateManager() : state_(nullptr), currentStateIndex(0), motor(2, 1000)
+{
+  // MotorController ;
+  motor.init(21);
+  motor.set(0.0);
 
-MyStateMachine::MyStateMachine() {
-  currentState = nullptr;
+  this->transitionToState(new InitializationState);
+  this->transitionToState(new PreOperationalState);
+  currentStateIndex = 1;
 }
 
-MyStateMachine::~MyStateMachine() {
-  if (currentState != nullptr) {
-    delete currentState;
+StateManager::~StateManager(){
+    delete state_;
+}
+
+void StateManager::loopAction() {
+    
+  state_->action_looped(&motor);
+  
+}
+
+void StateManager::transitionToState(State* nextState) {
+  if (this->state_ != nullptr)
+  {
+      // this->state_->on_exit();
+      delete this->state_;
   }
+  state_ = nextState;
+  state_->on_entry();
 }
 
-void MyStateMachine::setup() {
-  Serial.begin(9600);
-  currentState = new InitializationState();
-  currentState->on_entry();
-}
+void StateManager::receive_command(char cmd)
+{
+    if(cmd == 's'){
+      this->transitionToState(new OperationalState);
+      currentStateIndex = 2;
+    }
 
-void MyStateMachine::loop() {
+    else if (cmd == 'r'){
+      this->transitionToState(new InitializationState);
+      this->transitionToState(new PreOperationalState);
+      currentStateIndex = 0;
+    }
+    
+    else if (cmd == 'S'){
+      this->transitionToState(new StoppedState);
+      currentStateIndex = 3;
+    }
+    
+    else if (cmd == 'p'){
+      this->transitionToState(new PreOperationalState);
+      currentStateIndex = 1;
+    }
 
-currentState->handle_commands();
-  
-
-nextState = currentState->process_commands();
-  
-if (nextState != currentState) {
-transitionToState(nextState);
-}
-}
-
-
-
-void MyStateMachine::transitionToState(State* nextState) {
-  currentState->on_exit();
-  delete currentState;
-  currentState = nextState;
-  currentState->on_entry();
-}
-
-
-
-void MyStateMachine::on_receiving_go() {
-  currentState->on_receiving_go();
-}
-
-void MyStateMachine::on_receiving_stop() {
-  currentState->on_receiving_stop();
-}
-
-
-void MyStateMachine::sendBootUpMessage() {
-Serial.println("Boot-up message: Device is ready to receive commands.");
+    else{
+      Serial.println("Command unknown ...");
+    }
+    
 }
