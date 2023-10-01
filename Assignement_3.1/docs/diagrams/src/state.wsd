@@ -1,0 +1,16 @@
+@startuml machine3states
+    [*] --> StateA
+    StateA --> StateB : if last command received = go
+    StateA --> StateA : time++
+    StateB --> StateC : if last command received = go
+    StateB --> StateB : time++
+    StateC --> StateA : if last command received = go
+    StateC --> StateC : time++
+    StateA : Count for 5s
+    StateB : Count for 5s
+    StateC : Count for 5s
+@enduml
+
+
+
+
