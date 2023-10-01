@@ -10,8 +10,9 @@ class MotorController
         MotorController(int pinNumber, int target);
         void init(int period_ms = 1000);
         void set(float duty_cycle);
-        void updatePwm(int currentSpeed);
+        void updatePwm();
         void brake();
+        int currentSpeed;
 
     private:
         Timer_msec timer;

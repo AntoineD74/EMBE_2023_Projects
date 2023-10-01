@@ -24,7 +24,7 @@ void MotorController::set(float duty_cycle)
 }
 
 
-void MotorController::updatePwm(int currentSpeed)
+void MotorController::updatePwm()
 {
     double error;
     if(this->speedTarget > currentSpeed){ 

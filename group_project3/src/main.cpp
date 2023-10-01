@@ -4,8 +4,16 @@
 #include "motor_controller.h"
 #include "encoder.h"
 
-MotorController motor(2, 1000);
+#include "StateManager.h"
+#include "InitializationState.h"
+#include "Operational.h"
+#include "PreOperational.h"
+#include "StoppedState.h"
+
+// MotorController motor(2, 1000);
 Encoder encoder(2, 3); //c1: D2, c2: D3
+
+// stateManager_ = new StateManager(new InitializationState);
 
 //speed measurement 
 bool c1_hi = false;
@@ -23,6 +31,7 @@ bool updatePwm = false;
 float pwm = 0.9;
 int pwm_counter = 0;
 
+/*
 int main() 
 {
   Serial.begin(9600);
@@ -54,6 +63,46 @@ int main()
   }
 }
 
+*/
+//
+
+StateManager *stateManager_;
+
+int main()
+{
+  Serial.begin(9600); 
+
+  stateManager_ = new StateManager();
+  
+  sei();
+
+  while (true)
+  {
+    int command = 0;
+    if (Serial.available() > 0)
+    {
+      command = Serial.read();
+      stateManager_->receive_command(command);
+    }
+
+    //update speed if a new pulse is detected
+    if(c1_hi)
+    {
+      speed_secpulse = double{100000}/time_between_pulses;
+      stateManager_->motor.currentSpeed = speed_secpulse;
+
+      c1_hi = false;  //Turn flags down
+      clockwise = false;
+    }
+
+    if(updatePwm)
+    {
+      stateManager_->loopAction();
+      updatePwm = false;
+    }
+  }
+}
+
 ISR (INT0_vect)
 {
   c1_hi = true;
@@ -79,9 +128,9 @@ ISR (TIMER2_COMPA_vect)
 
 //Timer1
 ISR(TIMER1_COMPA_vect) {
-    motor.pin.set_hi();
+    stateManager_->motor.pin.set_hi();
 }
 
 ISR(TIMER1_COMPB_vect) {
-    motor.pin.set_lo();
+    stateManager_->motor.pin.set_lo();
 }
