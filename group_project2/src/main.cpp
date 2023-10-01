@@ -187,9 +187,10 @@ int main()
 
   while(1)
   {
-    Serial.print(speed_secpulse);
-    Serial.print("\\");
-    Serial.println(pwm);
+    // Serial.print(speed_secpulse);
+    // Serial.print("\\");
+    // Serial.println(pwm);
+    Serial.println(speed_secpulse);
 
     if(updatePwm)
     {
