@@ -2,9 +2,9 @@
 #define MY_STATE_MACHINE_H
 
 // #include <Arduino.h>
+#include "digital_out.h"
 #include "motor_controller.h"
 #include "state.h"
-
 
 #include "StateManager.h"
 #include "InitializationState.h"
@@ -17,6 +17,7 @@ class StateManager
     private:
         State *state_;
         int currentStateIndex;
+        int blinking_period;
 
     public:
         StateManager();
@@ -24,7 +25,9 @@ class StateManager
         void loopAction();
         void transitionToState(State *state);
         void receive_command(char cmd);
+        int get_blinking_period();
         MotorController motor;
+        Digital_out led;
 };
 
 #endif

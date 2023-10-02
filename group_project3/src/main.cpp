@@ -23,9 +23,14 @@ int time_between_pulses = 0;
 double speed_secpulse = 0;
 
 // Update rate
-int updatePeriod = 100; //updating every 100*10 us = 1000 us = 1 ms
+int updatePeriod = 1; //updating every 100*10 us = 1000 us = 1 ms
 int updateMsCounter = 0;
 bool updatePwm = false;
+
+//led
+int ledCounter = 0;
+int blinkingPeriod = 48; //48*21ms = 1008 s => 1Hz
+bool changeLedState = false;
 
 //pwm
 // float pwm = 0.9;
@@ -83,6 +88,7 @@ int main()
     {
       command = Serial.read();
       stateManager_->receive_command(command);
+      blinkingPeriod = stateManager_->get_blinking_period();
     }
 
     //update speed if a new pulse is detected
@@ -100,6 +106,11 @@ int main()
       stateManager_->loopAction();
       updatePwm = false;
     }
+
+    if(changeLedState){
+      if(blinkingPeriod != 0){ stateManager_->led.toggle(); }
+      changeLedState = false;
+    } 
   }
 }
 
@@ -114,23 +125,32 @@ ISR (INT0_vect)
   }
 }
 
-//Timer2
+//Timer2: Manage update rate
 ISR (TIMER2_COMPA_vect)
 {
   number_us++;
   updateMsCounter++;
-  if(updateMsCounter >= updatePeriod)
-  {
+
+  if(updateMsCounter >= updatePeriod){
     updatePwm = true;
     updateMsCounter = 0;
   }
 }
 
-//Timer1
+//Timer1: PWM + led management
 ISR(TIMER1_COMPA_vect) {
-    stateManager_->motor.pin.set_hi();
+  stateManager_->motor.pin.set_hi();
+  ledCounter++;
+
+  if(ledCounter == blinkingPeriod){
+    changeLedState = true;
+    ledCounter = 0;
+  }
+  else if (blinkingPeriod == 0){
+    ledCounter = 0;
+  }
 }
 
 ISR(TIMER1_COMPB_vect) {
-    stateManager_->motor.pin.set_lo();
+  stateManager_->motor.pin.set_lo();
 }

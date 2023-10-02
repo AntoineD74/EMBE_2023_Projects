@@ -4,6 +4,8 @@
 void InitializationState::on_entry() {
   Serial.println("\n[+]Initialization state: Device is initializing");
   Serial.println("Booting ...");
+
+  // OCR2B = OCR2A * 10000000;
 }
 
   
