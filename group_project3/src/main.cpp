@@ -28,8 +28,8 @@ int updateMsCounter = 0;
 bool updatePwm = false;
 
 //pwm
-float pwm = 0.9;
-int pwm_counter = 0;
+// float pwm = 0.9;
+// int pwm_counter = 0;
 
 /*
 int main() 

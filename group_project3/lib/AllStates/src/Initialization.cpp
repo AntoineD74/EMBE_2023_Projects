@@ -8,5 +8,6 @@ void InitializationState::on_entry() {
 
   
 void InitializationState::action_looped(MotorController *motor){
-
+  motor->set(0);
+  motor->brake();
 }

@@ -7,5 +7,6 @@ void StoppedState::on_entry() {
 }
 
 void StoppedState::action_looped(MotorController *motor){
+  motor->set(0.0);
   motor->brake();
 }

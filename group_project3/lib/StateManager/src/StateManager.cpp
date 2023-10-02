@@ -9,6 +9,7 @@ StateManager::StateManager() : state_(nullptr), currentStateIndex(0), motor(2, 1
   motor.set(0.0);
 
   this->transitionToState(new InitializationState);
+  this->loopAction();
   this->transitionToState(new PreOperationalState);
   currentStateIndex = 1;
 }
@@ -18,9 +19,7 @@ StateManager::~StateManager(){
 }
 
 void StateManager::loopAction() {
-    
   state_->action_looped(&motor);
-  
 }
 
 void StateManager::transitionToState(State* nextState) {
@@ -42,7 +41,9 @@ void StateManager::receive_command(char cmd)
 
     else if (cmd == 'r'){
       this->transitionToState(new InitializationState);
+      this->loopAction();
       this->transitionToState(new PreOperationalState);
+      this->loopAction();
       currentStateIndex = 0;
     }
     
