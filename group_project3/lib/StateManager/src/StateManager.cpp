@@ -48,19 +48,19 @@ void StateManager::receive_command(char cmd)
       this->transitionToState(new PreOperationalState);
       this->loopAction();
       currentStateIndex = 0;
-      blinking_period = 48;
+      blinking_period = 48; //1Hz
     }
     
     else if (cmd == 'S'){
       this->transitionToState(new StoppedState);
       currentStateIndex = 3;
-      blinking_period = 24;
+      blinking_period = 24; //2Hz
     }
     
     else if (cmd == 'p'){
       this->transitionToState(new PreOperationalState);
       currentStateIndex = 1;
-      blinking_period = 48;
+      blinking_period = 48; //1Hz
     }
 
     else{

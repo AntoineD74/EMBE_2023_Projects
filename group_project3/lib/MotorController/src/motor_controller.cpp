@@ -2,7 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-MotorController::MotorController(int pinNumber, int target): pin(pinNumber), timer(), speedTarget(target), kp(0.001)
+MotorController::MotorController(int pinNumber, int target): pin(pinNumber), timer(), speedController(0.001, target)
 {
 }
 
@@ -24,15 +24,9 @@ void MotorController::set(float duty_cycle)
 }
 
 
-void MotorController::updatePwm()
-{
-    double error;
-    if(this->speedTarget > currentSpeed){ 
-        error = speedTarget - currentSpeed;
-    } else{ 
-        error = currentSpeed - speedTarget;
-    }
-    this->set(kp * error);
+void MotorController::updatePwm(){
+    double pwm = speedController.updatePwm(currentSpeed);
+    this->set(pwm);
 }
 
 

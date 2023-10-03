@@ -3,6 +3,7 @@
 
 #include <timer_msec.h>
 #include <digital_out.h>
+#include "speed_controller.h"
 
 class MotorController
 {
@@ -13,14 +14,14 @@ class MotorController
         void updatePwm();
         void brake();
         int currentSpeed;
+        Digital_out pin;
 
     private:
         Timer_msec timer;
-        int speedTarget;
-        double kp;
-
-    public:    
-        Digital_out pin;
+        PController speedController;
+        // int speedTarget;
+        // double kp;  
+        
 };
 
 #endif
