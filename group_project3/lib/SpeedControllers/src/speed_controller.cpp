@@ -14,5 +14,6 @@ double PController::updatePwm(double actual)
     } else{ 
         error = actual - speedTarget;
     }
+
     return (kp * error);
 }

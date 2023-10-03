@@ -9,8 +9,6 @@ class PController
         int speedTarget;
         PController(double k, int target);
         double updatePwm(double actual);
-
-    private:
         double kp;
 };
 

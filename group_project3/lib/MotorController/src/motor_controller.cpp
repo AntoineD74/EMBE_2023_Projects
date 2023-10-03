@@ -2,7 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-MotorController::MotorController(int pinNumber, int target): pin(pinNumber), timer(), speedController(0.001, target)
+MotorController::MotorController(int pinNumber, int target): pin(pinNumber), timer(), speedController(0.001, target, 0.021, 0.02)
 {
 }
 

@@ -23,7 +23,7 @@ int time_between_pulses = 0;
 double speed_secpulse = 0;
 
 // Update rate
-int updatePeriod = 1; //updating every 100*10 us = 1000 us = 1 ms
+int updatePeriod = 10;  //10*10 us
 int updateMsCounter = 0;
 bool updatePwm = false;
 

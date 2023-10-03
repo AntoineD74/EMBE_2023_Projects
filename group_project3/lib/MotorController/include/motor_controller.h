@@ -4,6 +4,7 @@
 #include <timer_msec.h>
 #include <digital_out.h>
 #include "speed_controller.h"
+#include "speed_controller_integrated.h"
 
 class MotorController
 {
@@ -18,9 +19,9 @@ class MotorController
 
     private:
         Timer_msec timer;
-        PController speedController;
-        // int speedTarget;
-        // double kp;  
+        // PController speedController;
+        PIController speedController;
+        
         
 };
 
