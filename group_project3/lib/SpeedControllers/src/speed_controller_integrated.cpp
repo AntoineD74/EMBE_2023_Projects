@@ -17,6 +17,11 @@ double PIController::updatePwm(double actual)
     integral = error*t;
     double control_signal = kp * error + kp/ti*integral;
     
-    control_signal = (control_signal > 1.0 ? 1.0 : control_signal);
+    control_signal = (control_signal > 1.0 ? 0.9 : control_signal);
     return control_signal;
+}
+
+void PIController::changeParameters(double newKp, double newTi){
+    kp = newKp;
+    ti = newTi;
 }

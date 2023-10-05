@@ -3,9 +3,9 @@
 
 void PreOperationalState::on_entry() {
   Serial.println("\n[+]Pre-operational state: Device is in pre-operational configuration.");
-  // Led 1Hz
 }
 
-void PreOperationalState::action_looped(MotorController *motor){
 
+void PreOperationalState::action_looped(MotorController *motor){
+  motor->brake();
 }

@@ -17,3 +17,7 @@ double PController::updatePwm(double actual)
 
     return (kp * error);
 }
+
+void PController::changeParameters(double newKp){
+    kp = newKp;
+}

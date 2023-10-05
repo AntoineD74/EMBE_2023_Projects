@@ -16,11 +16,13 @@ class MotorController
         void brake();
         int currentSpeed;
         Digital_out pin;
-
+        PIController speedController;
+        // PController speedController;
+    
     private:
         Timer_msec timer;
         // PController speedController;
-        PIController speedController;
+        
         
         
 };
