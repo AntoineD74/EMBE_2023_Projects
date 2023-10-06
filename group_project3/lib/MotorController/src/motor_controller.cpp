@@ -2,7 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-MotorController::MotorController(int pinNumber, int target): pin(pinNumber), timer(), speedController(0.001, target, 0.021, 0.02)
+MotorController::MotorController(int pinNumber, int target): pin(pinNumber), timer(), speedController2(0.001, target), speedController(0.001, target, 0.021, 0.02), useIntegrated(true)
 {
 }
 
@@ -25,7 +25,14 @@ void MotorController::set(float duty_cycle)
 
 
 void MotorController::updatePwm(){
-    double pwm = speedController.updatePwm(currentSpeed);
+    double pwm;
+    if(useIntegrated){
+        pwm = speedController.updatePwm(currentSpeed);
+    }
+    else {
+        pwm = speedController2.updatePwm(currentSpeed);
+    }
+    
     this->set(pwm);
 }
 

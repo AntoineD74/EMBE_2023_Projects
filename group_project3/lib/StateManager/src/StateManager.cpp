@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <StateManager.h>
 
-
 StateManager::StateManager() : state_(nullptr), currentStateIndex(0), blinking_period(0), motor(2, 1000), led(5)
 {
   // MotorController ;
@@ -50,8 +49,27 @@ StateManager::StateManager() : state_(nullptr), currentStateIndex(0), blinking_p
   float ti = strtod(chars2, nullptr);
   Serial.println(ti);
 
-  motor.speedController.changeParameters(kp, ti);
+  Serial.print("Use integrated speed controller ? [y/n] : ");
+  char character3[2];
+  int k = 0;
+  while(1){
+    if(Serial.available())
+    {
+      character3[k] = Serial.read();
+      k++;
+      if(k == 3){ break; }
+    }
+  }
+  Serial.println(character3[1]);
 
+  if(character3[1] == 'y' || character3[1] == 'Y'){
+    motor.useIntegrated = true;
+  }
+  else {
+    motor.useIntegrated = false;
+  }
+
+  motor.speedController.changeParameters(kp, ti);
 }
 
 StateManager::~StateManager(){
@@ -125,6 +143,26 @@ void StateManager::receive_command(char cmd)
       }
       double ti = strtod(chars2, nullptr);
       Serial.println(ti);
+
+      Serial.print("Use integrated speed controller ? [y/n] : ");
+      char character3[2];
+      int m = 0;
+      while(1){
+        if(Serial.available())
+        {
+          character3[m] = Serial.read();
+          m++;  
+        }
+        if(m == 3){ break; }
+      }
+      Serial.println(character3[1]);
+
+      if(character3[1] == 'y' || character3[1] == 'Y'){
+        motor.useIntegrated = true;
+      }
+      else {
+        motor.useIntegrated = false;
+      }
 
       motor.speedController.changeParameters(kp, ti);
     }

@@ -17,7 +17,8 @@ class MotorController
         int currentSpeed;
         Digital_out pin;
         PIController speedController;
-        // PController speedController;
+        PController speedController2;
+        bool useIntegrated;
     
     private:
         Timer_msec timer;
