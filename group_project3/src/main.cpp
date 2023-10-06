@@ -10,6 +10,13 @@
 #include "PreOperational.h"
 #include "StoppedState.h"
 
+/* ==================== Available Commands =========================
+  s : set -> go to operational state
+  S : Stop -> go to operational state
+  r : reset -> go to operational state
+  p : preoperation -> go to operational state
+====================================================================*/
+
 // MotorController motor(2, 1000);
 Encoder encoder(2, 3); //c1: D2, c2: D3
 
@@ -31,45 +38,6 @@ bool updatePwm = false;
 int ledCounter = 0;
 int blinkingPeriod = 48; //48*21ms = 1008 s => 1Hz
 bool changeLedState = false;
-
-//pwm
-// float pwm = 0.9;
-// int pwm_counter = 0;
-
-/*
-int main() 
-{
-  Serial.begin(9600);
-
-  motor.init(21);
-  motor.set(pwm);  //Change this value to control the intensity of the led
-  encoder.init();
-
-  sei();
-
-  while (1) 
-  {
-    Serial.println(speed_secpulse);
-
-    //update speed if a new pulse is detected
-    if(c1_hi)
-    {
-      encoder.updateCounter(clockwise);
-      speed_secpulse = double{100000}/time_between_pulses;
-      c1_hi = false;  //Turn flags down
-      clockwise = false;
-    }
-
-    if(updatePwm)
-    {
-      motor.updatePwm(speed_secpulse);  
-      updatePwm = false;
-    }
-  }
-}
-
-*/
-//
 
 StateManager *stateManager_;
 

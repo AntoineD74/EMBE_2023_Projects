@@ -174,9 +174,67 @@ void StateManager::receive_command(char cmd)
     }
     
     else if (cmd == 'p'){
+      motor.set(0.0);
+      motor.brake();
       this->transitionToState(new PreOperationalState);
       currentStateIndex = 1;
       blinking_period = 48; //1Hz
+
+      Serial.print("\nEnter a value for Kp: ");
+      char chars[20];
+      char character;
+      int i = 0;
+      while(1){
+        if(Serial.available())
+        {
+          character = Serial.read();
+          if(character == 13){ break; }
+          chars[i] = character;
+          i++;
+        }
+        if(i==20){ break; }
+      }
+      double kp = strtod(chars, nullptr);
+      Serial.println(kp);
+
+      Serial.print("Enter a value for Ti: ");
+      char chars2[20];
+      char character2;
+      int j = 0;
+      while(1){
+        if(Serial.available())
+        {
+          character2 = Serial.read();
+          if(character2 == 13){ break; }
+          chars2[j] = character2;
+          j++;
+        }
+        if(j==20){ break; }
+      }
+      double ti = strtod(chars2, nullptr);
+      Serial.println(ti);
+
+      Serial.print("Use integrated speed controller ? [y/n] : ");
+      char character3[2];
+      int m = 0;
+      while(1){
+        if(Serial.available())
+        {
+          character3[m] = Serial.read();
+          m++;  
+        }
+        if(m == 3){ break; }
+      }
+      Serial.println(character3[1]);
+
+      if(character3[1] == 'y' || character3[1] == 'Y'){
+        motor.useIntegrated = true;
+      }
+      else {
+        motor.useIntegrated = false;
+      }
+
+      motor.speedController.changeParameters(kp, ti);
     }
 
     else{
