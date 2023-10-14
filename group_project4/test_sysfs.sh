@@ -28,17 +28,14 @@ while [ $COUNTER -lt 10 ]; do
     if [ $STATE_IN -eq 1 ]; then 
         START_TIME=$(date +%s.%N)   # Record the start time
         echo 1 > /sys/class/gpio/gpio$OUT_PIN/value
-        RESPONSE_TIME=$(echo "$ELAPSED_TIME - $START_TIME" | bc -l)
+        RESPONSE_TIME=$(date +%s.%N)
         echo "Input pin is high"
-        ELAPSED_TIME=$(date +%s.%N)
+        ELAPSED_TIME=$(echo "$RESPONSE_TIME - $START_TIME")
         echo $ELAPSED_TIME
-        COUNTER=10
+        COUNTER=10  # Stop the test
     fi
 done
 
 # Unexport the GPIO pins when done
 echo $OUT_PIN > /sys/class/gpio/unexport
 echo $IN_PIN > /sys/class/gpio/unexport
-
-echo $IN_PIN > /sys/class/gpio/unexport
-echo $OUT_PIN > /sys/class/gpio/unexport
