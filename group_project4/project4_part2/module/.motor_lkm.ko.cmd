@@ -1,0 +1,1 @@
+cmd_/home/antoi/project4_part2/module/motor_lkm.ko := ld -r -EL  -maarch64elf -z noexecstack --build-id=sha1  -T scripts/module.lds -o /home/antoi/project4_part2/module/motor_lkm.ko /home/antoi/project4_part2/module/motor_lkm.o /home/antoi/project4_part2/module/motor_lkm.mod.o;  true

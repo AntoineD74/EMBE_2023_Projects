@@ -1,0 +1,17 @@
+@startuml machine3states
+    hide empty description
+    [*] --> Initialization
+    Initialization --> PreOperational
+    PreOperational --> Operational : if command = set
+    Operational --> PreOperational : if command = pre
+
+
+    Operational --> Stopped : if command = stop
+    PreOperational --> Stopped : if command = stop
+    Stopped --> Operational : if command = stop
+    Stopped --> PreOperational : if command = pre
+
+    PreOperational --> Initialization : if command = reset
+    Operational --> Initialization : if command = reset
+    Stopped --> Initialization : if command = reset
+@enduml
