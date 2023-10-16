@@ -11,7 +11,7 @@ MODULE_DESCRIPTION("Motor driver reading state of rotation and implement PWM");
 MODULE_VERSION("0.1");
 
 #define  DEVICE_MAJOR 234         ///< Requested device node major number or 0 for dynamic allocation
-#define  DEVICE_NAME "mydev1"   ///< In this implementation, the device name has nothing to do with the name of the device in /dev. You must use mknod to create the device node in /dev
+#define  DEVICE_NAME "motor"   ///< In this implementation, the device name has nothing to do with the name of the device in /dev. You must use mknod to create the device node in /dev
 
 // static unsigned int gpioLED = 18;             // pin 18 (GPIO18) 
 static unsigned int gpioMotorInput = 17;          // pin 17 (GPIO17) 
@@ -27,10 +27,10 @@ module_param(name, charp, S_IRUGO);
 MODULE_PARM_DESC(name, "The name to display in /var/log/kern.log");
 
 // The prototype functions for the character driver -- must come before the struct definition
-static int     erpi_gpio_open(struct inode *, struct file *);
-static ssize_t    erpi_gpio_write(struct file *, const char *, size_t, loff_t *);
-static int erpi_gpio_release(struct inode *, struct file *);
-static ssize_t erpi_gpio_read(struct file *file, char *buffer, size_t length, loff_t *offset);
+static int      erpi_gpio_open(struct inode *, struct file *);
+static ssize_t  erpi_gpio_write(struct file *, const char *, size_t, loff_t *);
+static int      erpi_gpio_release(struct inode *, struct file *);
+static ssize_t  erpi_gpio_read(struct file *file, char *buffer, size_t length, loff_t *offset);
 
 static struct file_operations fops =
 {
@@ -58,14 +58,12 @@ static int erpi_gpio_open(struct inode *inodep, struct file *filep){
 }
 
 static ssize_t erpi_gpio_read(struct file *file, char *buffer, size_t length, loff_t *offset){
-    int gpioState = gpio_get_value(gpioMotorInput);
 
-    // Copy the GPIO state to the user buffer
-    if (copy_to_user(buffer, &motorInputState, sizeof(int)) != 0) {
+    if (copy_to_user(buffer, &motorInputState, sizeof(motorInputState)) != 0) {
         return -EFAULT;
     }
 
-    return sizeof(int); // Number of bytes read
+    return sizeof(motorInputState); // Number of bytes read
 }
 
 // prototype for the custom IRQ handler function, function below 
@@ -128,7 +126,8 @@ static void __exit erpi_gpio_exit(void)
 static irq_handler_t erpi_gpio_irq_handler(unsigned int irq, void *dev_id, struct pt_regs *regs) 
 {   
     // gpio_set_value(gpioLED, ledOn);
-    printk(KERN_INFO "Rising edge !!");
+    motorInputState++; //Increment value
+    printk(KERN_INFO "Rising edge !! %d\n", motorInputState);
     return (irq_handler_t) IRQ_HANDLED;      // announce IRQ handled 
 }
 
