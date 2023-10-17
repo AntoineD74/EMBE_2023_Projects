@@ -47,13 +47,13 @@ static ssize_t erpi_gpio_write(struct file * file, const char *buf, size_t count
 }
 
 static int erpi_gpio_release(struct inode *inodep, struct file *filep){
-   printk(KERN_INFO "mydev: Device successfully closed\n");
+//    printk(KERN_INFO "mydev: Device successfully closed\n");
    return 0;
 }
 
 static int erpi_gpio_open(struct inode *inodep, struct file *filep){
    numberOpens++;
-   printk(KERN_INFO "mydev: Device has been opened %d time(s)\n", numberOpens);
+//    printk(KERN_INFO "mydev: Device has been opened %d time(s)\n", numberOpens);
    return 0;
 }
 
@@ -127,7 +127,7 @@ static irq_handler_t erpi_gpio_irq_handler(unsigned int irq, void *dev_id, struc
 {   
     // gpio_set_value(gpioLED, ledOn);
     motorInputState++; //Increment value
-    printk(KERN_INFO "Rising edge !! %d\n", motorInputState);
+    // printk(KERN_INFO "Rising edge !! %d\n", motorInputState);
     return (irq_handler_t) IRQ_HANDLED;      // announce IRQ handled 
 }
 

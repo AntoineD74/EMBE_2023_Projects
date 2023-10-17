@@ -1,11 +1,6 @@
 // #include "../lib/MotorController/motor_controller.h"
 // #include "/lib/Encoder/encoder.h"
 
-// #include "InitializationState.h"
-// #include "Operational.h"
-// #include "PreOperational.h"
-// #include "StoppedState.h"
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -15,8 +10,6 @@
 
 // MotorController motor(2, 1000);
 // Encoder encoder(2, 3); //c1: D2, c2: D3
-
-// // stateManager_ = new StateManager(new InitializationState);
 
 // //speed measurement 
 // bool c1_hi = false;
@@ -30,11 +23,6 @@
 // int updateMsCounter = 0;
 // bool updatePwm = false;
 
-// //led
-// int ledCounter = 0;
-// int blinkingPeriod = 48; //48*21ms = 1008 s => 1Hz
-// bool changeLedState = false;
-
 //Speed measurment
 char motorInputState = 0;
 int previousmotorInputState = 0;
@@ -43,24 +31,47 @@ int speed_secpulse = 0;
 int timeLastPulse = clock();
 int time_between_pulses;
 
+int period = 100000;
+int duty_cyle = 0.9*100000;
+
 int main() 
 {
   // encoder.init();
+
+  // Step 1: Export the PWM channel
+int export_fd = open("/sys/class/pwm/pwmchip0/export", O_WRONLY);
+write(export_fd, "0", 1);
+close(export_fd);
+
+// Step 2: Set the period
+int period_fd = open("/sys/class/pwm/pwmchip0/pwm0/period", O_WRONLY);
+write(period_fd, "100000", 6); // Example: Set the period to 100,000 nanoseconds (0.1 ms)
+close(period_fd);
+
+// Step 3: Set the duty cycle
+int duty_cycle_fd = open("/sys/class/pwm/pwmchip0/pwm0/duty_cycle", O_WRONLY);
+write(duty_cycle_fd, "50000", 5); // Example: Set the duty cycle to 50,000 nanoseconds (50% duty cycle)
+close(duty_cycle_fd);
+
+// Step 4: Enable the PWM
+int enable_fd = open("/sys/class/pwm/pwmchip0/pwm0/enable", O_WRONLY);
+write(enable_fd, "1", 1);
+close(enable_fd);
+
   
   while (1) 
   {
+
     fd = open("/dev/motor", O_RDONLY);  
-    read(fd, &motorInputState, sizeof(motorInputState));
+    read(fd, &motorInputState, 1);
     close(fd);
 
     // printf("%d\n", (int)motorInputState);
 
     if(motorInputState != previousmotorInputState){
       // encoder.updateCounter(true);
-      // printf("HHHHHHHHHHHHHH");
-      time_between_pulses = ((double) (clock() - timeLastPulse) * 1000000000) / CLOCKS_PER_SEC; //In us
+      time_between_pulses = ((double) (clock() - timeLastPulse) * 1000000000) / CLOCKS_PER_SEC; //In ns
       // printf("%d\n", time_between_pulses);
-      
       speed_secpulse = 1000000000/time_between_pulses;
       timeLastPulse = clock();
       previousmotorInputState = motorInputState;
@@ -83,47 +94,9 @@ int main()
   //     updatePwm = false;
   //   }
   }
+
+  //Unexport pwm
+  fd = open("/sys/class/pwm/pwmchip0/unexport", O_WRONLY);
+  write(fd, "0", 2);
+  close(fd);
 }
-
-// ISR (INT0_vect)
-// {
-//   c1_hi = true;
-//   time_between_pulses = number_us;
-//   number_us = 0;
-//   if(!encoder.is_C2_hi())
-//   {
-//     clockwise = true;
-//   }
-// }
-
-//Timer2: Manage update rate
-// ISR (TIMER2_COMPA_vect)
-// {
-//   number_us++;
-//   updateMsCounter++;
-
-//   if(updateMsCounter >= updatePeriod){
-//     updatePwm = true;
-//     updateMsCounter = 0;
-//   }
-// }
-
-// //Timer1: PWM + led management
-// ISR(TIMER1_COMPA_vect) {
-//   Serial.println("Time1");
-  // stateManager_->motor.pin.set_hi();
-  // ledCounter++;
-
-  // if(ledCounter == blinkingPeriod){
-  //   changeLedState = true;
-  //   ledCounter = 0;
-  // }
-  // else if (blinkingPeriod == 0){
-  //   ledCounter = 0;
-  // }
-// }
-
-// ISR(TIMER1_COMPB_vect) {
-//   // stateManager_->motor.pin.set_lo();
-//   Serial.println("Time2");
-// }
