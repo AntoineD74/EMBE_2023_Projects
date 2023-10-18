@@ -4,15 +4,26 @@
 class Encoder
 {
     private:
-        uint8_t pinC1;
-        uint8_t pinC2;
         int position;
 
     public: 
-        Encoder(int pin1, int pin2);
-        void init();
-        bool is_C1_hi();
-        bool is_C2_hi();
+        Encoder();
         void updateCounter(bool clockwise);
         int getPosition();
 };
+
+Encoder::Encoder(): position(0)
+{
+    
+}
+
+void Encoder::updateCounter(bool clockwise)
+{
+    if(clockwise){ position++; }
+    else{ position--; }
+}
+
+int Encoder::getPosition()
+{
+    return position;
+}
