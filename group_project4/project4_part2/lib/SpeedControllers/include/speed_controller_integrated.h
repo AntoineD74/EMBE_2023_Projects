@@ -2,6 +2,11 @@
 #define PICONTROLLER_H
 
 #include "speed_controller.h"
+#include <string>
+#include <unistd.h>
+#include <fcntl.h>
+
+using namespace std;
 
 class PIController : public PController
 {
@@ -14,7 +19,6 @@ class PIController : public PController
         double ti;
         double t;
         double integral;
-
 };
 
 
@@ -31,11 +35,11 @@ double PIController::updatePwm(double actual)
     else{ 
         error = actual - speedTarget;
     }
-
+    
     integral = error*t;
     double control_signal = kp * error + kp/ti*integral;
-    
     control_signal = (control_signal > 1.0 ? 0.9 : control_signal);
+
     return control_signal;
 }
 

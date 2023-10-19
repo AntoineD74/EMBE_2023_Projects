@@ -10,12 +10,18 @@
 
 using namespace std;
 
-int speedTarget = 500;
-PIController speedController(0.001, speedTarget, 0.021, 0.02);
+// ============================= Speed controller parameters ======================== //
+float kp = 0.004;
+int speedTarget = 600;
+float ti = 0.021;
+float t = 0.04;
+
+PIController speedController(kp, speedTarget, ti, t);
 Encoder encoder;
+// ==================================================================================//
 
 // Update rate
-int updatePeriod = 100;
+int updatePeriod = 21; // Update every 21 ms
 int updateCounter = 0;
 double lastUpdate = clock();
 
@@ -59,8 +65,6 @@ int main()
     read(fd, &motorInputState, 1);
     close(fd);
 
-    // printf("%d\n", (int)motorInputState);
-
     if(motorInputState != previousmotorInputState){
       encoder.updateCounter(1);
       time_between_pulses = ((double) (clock() - timeLastPulse) * 1000000000) / CLOCKS_PER_SEC; //In ns
@@ -68,21 +72,23 @@ int main()
       speed_secpulse = 1000000000/time_between_pulses;
       timeLastPulse = clock();
       previousmotorInputState = motorInputState;
+
+      printf("Instantaneous speed: %d\n", speed_secpulse);
     }
+    
 
-    printf("Instantaneous speed: %d\n", speed_secpulse);
-
-    if((clock() - lastUpdate) * 1000 / CLOCKS_PER_SEC){ //In ms
+    if((clock() - lastUpdate) * 1000 / CLOCKS_PER_SEC){ //Every 1 ms
       updateCounter++;
       
       if(updateCounter == updatePeriod){
         pwm = speedController.updatePwm((double) speed_secpulse);
-        // printf("PWM: %d\n", pwm);
-        duty_cycle = pwm*period;  // Recompute ducty cycle
-        // int duty_cycle_fd = open("/sys/class/pwm/pwmchip0/pwm0/duty_cycle", O_WRONLY);
-        // convertedString = to_string(duty_cycle);
-        // write(duty_cycle_fd, convertedString.c_str(), convertedString.length()); // Example: Set the duty cycle to 50,000 nanoseconds (50% duty cycle)
-        // close(duty_cycle_fd);
+        // int pwmAsInt = static_cast<int>(pwm * 10); // Convert to an integer
+        // printf("PWM: 0.%d\n", pwmAsInt);
+        duty_cycle = pwm * 100000;  // Recompute ducty cycle
+        int duty_cycle_fd = open("/sys/class/pwm/pwmchip0/pwm0/duty_cycle", O_WRONLY);
+        convertedString = to_string(duty_cycle);
+        write(duty_cycle_fd, convertedString.c_str(), convertedString.length()); // Example: Set the duty cycle to 50,000 nanoseconds (50% duty cycle)
+        close(duty_cycle_fd);
         
         updateCounter = 0;
       }
