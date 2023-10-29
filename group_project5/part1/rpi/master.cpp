@@ -35,9 +35,8 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[1], "HIGH") == 0) {
         value = 1;
     }
-    else if (strcmp(argv[1], "LOW") == 0)
-    {
-        value = 0;
+    else if (strcmp(argv[1], "LOW") == 0){
+        value = 2;
     }
     else {
         perror("Wrong value entered\n");
