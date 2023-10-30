@@ -32,19 +32,18 @@ int main(int argc, char *argv[]) {
     while (opt != 0xff) {
         switch (opt) {
             case 'c':
-                command = optarg[0];  // Just need first character to
-                                      // differentiate [R]ead from [W]rite
+                command = optarg[0];
                 printf("Command: %c\n", command);
                 break;
 
             case 'd':
                 device_address = atoi(optarg);
-                printf("Device address: %d\n", device_address);
+                printf("Adressing to device n°: %d\n", device_address);
                 break;
 
             case 'v':
                 value = atoi(optarg);
-                printf("Value: %d\n", value);
+                printf("Sending value: %d\n", value);
                 break;
 
             default:
@@ -53,8 +52,6 @@ int main(int argc, char *argv[]) {
         }
         opt = getopt_long(argc, argv, "c:d:v:", long_options, &option_index);
     }
-
-    // #### DONE WITH PARSE ####
 
     if ((fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY)) < 0) {
         perror("UART: Failed to open the fd.\n");

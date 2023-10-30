@@ -119,17 +119,15 @@ void write_msg(uint8_t msg[]) {
     uint16_t first_register = register_higher << 8 | register_lower;
 
     pinMode(PD1, OUTPUT);
-    if (first_register == 1)
-    {
+    if (first_register == 1){
         if (register_value == 1 || register_value == 0) {
             ledState = register_value;
 
             Serial.println("Changing Led state");
             digitalWrite(led, ledState);       
 
-            uint8_t packet[MSG_LEN] = {MODBUS_ADDRESS, uint8_t(6), register_higher, register_lower, uint8_t(0), ledState, 0, 0};
+            uint8_t packet[MSG_LEN] = {1, uint8_t(6), register_higher, register_lower, uint8_t(0), ledState, 0, 0};
             setCrc(packet,sizeof(packet));
-
             Serial.write(packet, sizeof(packet));
         }
         else{

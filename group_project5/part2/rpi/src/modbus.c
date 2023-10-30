@@ -38,8 +38,7 @@ uint8_t readHoldingRegisters(char* response_buffer, uint8_t fd, uint8_t address,
     }
 
     if (recv_packet[0] != address) {
-        fprintf(stderr,
-                "Response form wrong address. Expected: %02x, got: %02x\n",
+        fprintf(stderr, "Response form wrong address. Expected: %02x, got: %02x\n",
                 address, recv_packet[0]);
         return -1;
     }
@@ -49,11 +48,10 @@ uint8_t readHoldingRegisters(char* response_buffer, uint8_t fd, uint8_t address,
         return -1;
     }
 
-    // ERROR
-    if (recv_packet[1] == '\x83') {
+    if (recv_packet[1] == '\x83') { // if error
         return handleExceptionCode(fd, first_register, register_count);
-
-    } else if (recv_packet[1] == '\x03') {  // Success
+    } 
+    else if (recv_packet[1] == '\x03') {  // if success
 
         if (read(fd, recv_packet + 2, 1) != 1) {
             perror("Failed to read number of bytes from received  packet\n");
@@ -124,16 +122,14 @@ uint8_t writeSingleRegister(uint8_t fd, uint8_t address, uint16_t register_addre
         perror("Failed to read return code from received packet\n");
         return -1;
     }
-
-    // ERROR
-    if (recv_packet[1] == '\x86') {
+    
+    if (recv_packet[1] == '\x86') { // if error
         return handleExceptionCode(fd, register_address, value);
 
-    } else if (recv_packet[1] == '\x06') {  // Success
+    } else if (recv_packet[1] == '\x06') {  // if success
 
         if (read(fd, recv_packet + 2, 6) != 6) {
-            perror(
-                "Failed to read contents of received  "
+            perror("Failed to read contents of received  "
                 "packet\n");
             return -1;
         }
@@ -142,16 +138,14 @@ uint8_t writeSingleRegister(uint8_t fd, uint8_t address, uint16_t register_addre
         recv_value = MAKE_16(recv_packet[4], recv_packet[5]);
 
         if (recv_address != register_address) {
-            fprintf(stderr,
-                    "Recieved unexpected address after writeSingleRegister, "
+            fprintf(stderr, "Recieved unexpected address after writeSingleRegister, "
                     "received: %04x, expected: %04x\n",
                     recv_address, register_address);
             return 1;
         }
 
         if (recv_value != value) {
-            fprintf(stderr,
-                    "Recieved unexpected value after writeSingleRegister, "
+            fprintf(stderr, "Recieved unexpected value after writeSingleRegister, "
                     "received: %04x, expected: %04x\n",
                     recv_value, value);
             return 1;
@@ -180,8 +174,7 @@ uint8_t handleExceptionCode(uint8_t fd, uint16_t first_argument, uint16_t second
             fprintf(stderr, "Recieved error illegal function\n");
             return 1;
         case 2:
-            fprintf(stderr,
-                    "Recieved error illegal data address for first "
+            fprintf(stderr, "Recieved error illegal data address for first "
                     "register %04x and register count %04x\n",
                     first_argument, second_argument);
             return 1;
