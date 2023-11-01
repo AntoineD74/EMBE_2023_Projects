@@ -13,46 +13,27 @@
 
 int main(int argc, char *argv[]) {
     int fd;
-    uint8_t device_address;
-    uint16_t value;  // Value to write in case command is write
-    unsigned char command, opt;
-    char response_buffer[2] = {0};  // Only for response from read - 2 bytes
-                                    // since we just read one register
+    char response_buffer[2] = {0};
+                                    
+    uint8_t device = atoi(argv[1]);
+    printf("Device modbus adress: %c\n", device);
 
-    // #### PARSE ARGS ####
-
-    static struct option long_options[] = {
-        {"command", required_argument, NULL, 'c'},
-        {"device", required_argument, NULL, 'd'},
-        {"value", required_argument, NULL, 'v'},
-        {NULL, 0, NULL, 0}};
-
-    int option_index = 0;
-    opt = getopt_long(argc, argv, "c:d:v:", long_options, &option_index);
-    while (opt != 0xff) {
-        switch (opt) {
-            case 'c':
-                command = optarg[0];
-                printf("Command: %c\n", command);
-                break;
-
-            case 'd':
-                device_address = atoi(optarg);
-                printf("Adressing to device n°: %d\n", device_address);
-                break;
-
-            case 'v':
-                value = atoi(optarg);
-                printf("Sending value: %d\n", value);
-                break;
-
-            default:
-                printf("unknown argument %02x\n", opt);
-                return -1;
-        }
-        opt = getopt_long(argc, argv, "c:d:v:", long_options, &option_index);
+    unsigned char command = argv[2][0];
+    printf("Command entered: %c\n", command);
+    
+    uint16_t value;
+    if (strcmp(argv[3], "HIGH") == 0) {
+        value = 1;
     }
-
+    else if (strcmp(argv[3], "LOW") == 0){
+        value = 2;
+    }
+    else {
+        perror("Wrong value entered\n");
+        return -1;
+    }
+    printf("Value to send: %c\n\n", value);
+    
     if ((fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY)) < 0) {
         perror("UART: Failed to open the fd.\n");
         return -1;
@@ -67,10 +48,9 @@ int main(int argc, char *argv[]) {
 
     tcflush(fd, TCIFLUSH);
     tcsetattr(fd, TCSANOW, &options);
-
     switch (command) {
         case 'r':
-            if (readHoldingRegisters(response_buffer, fd, device_address, 0x01, 0x01) != 0) {
+            if (readHoldingRegisters(response_buffer, fd, device, 0x01, 0x01) != 0) {
                 printf("Error on read command\n");
             } else {
                 printf("Read %04x\n", MAKE_16(response_buffer[0], response_buffer[1]));
@@ -78,11 +58,11 @@ int main(int argc, char *argv[]) {
             break;
 
         case 'w':
-            writeSingleRegister(fd, device_address, 0x01, value);
+            writeSingleRegister(fd, device, 0x01, value);
             break;
 
         default:
-            printf("Unknown command %c\n", opt);
+            printf("Wrong call of the program");
             return -1;
     }
 
