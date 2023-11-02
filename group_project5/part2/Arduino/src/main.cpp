@@ -120,7 +120,8 @@ void write_msg(uint8_t msg[]) {
 
     pinMode(PD1, OUTPUT);
     if (first_register == 1){
-        if (register_value == 1 || register_value == 0) {
+        if (register_value == 1 || register_value == 2) {
+            if(register_value == 2){ register_value = 0; }
             ledState = register_value;
 
             Serial.println("Changing Led state");

@@ -14,9 +14,9 @@
 int main(int argc, char *argv[]) {
     int fd;
     char response_buffer[2] = {0};
-                                    
+
     uint8_t device = atoi(argv[1]);
-    printf("Device modbus adress: %c\n", device);
+    printf("Device modbus adress: %d\n", device);
 
     unsigned char command = argv[2][0];
     printf("Command entered: %c\n", command);
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         perror("Wrong value entered\n");
         return -1;
     }
-    printf("Value to send: %c\n\n", value);
+    printf("Value to send: %d\n\n", value);
     
     if ((fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY)) < 0) {
         perror("UART: Failed to open the fd.\n");
