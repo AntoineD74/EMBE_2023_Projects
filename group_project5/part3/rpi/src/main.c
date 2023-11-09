@@ -11,6 +11,12 @@
 
 #define MAKE_16(higher, lower) (((uint16_t)higher << 8) | (uint16_t)lower)
 
+#define set_cmd 0x01
+#define stop_cmd 0x02
+#define preoperational_cmd 0x80
+#define reset_cmd 0x81
+#define reset_communications_cmd 0x82
+
 int main(int argc, char *argv[]) {
     int fd;
     char response_buffer[2] = {0};
@@ -21,18 +27,21 @@ int main(int argc, char *argv[]) {
     unsigned char command = argv[2][0];
     printf("Command entered: %c\n", command);
     
-    uint16_t value;
-    if (strcmp(argv[3], "HIGH") == 0) {
-        value = 1;
+    uint16_t value = 0;
+    if (argc >= 4) {
+        if (strcmp(argv[3], "HIGH") == 0) {
+            value = 1;
+        }
+        else if (strcmp(argv[3], "LOW") == 0){
+            value = 2;
+        }
+        else {
+            perror("Wrong value entered\n");
+            return -1;
+        }
+        printf("Value to send: %d\n\n", value);
     }
-    else if (strcmp(argv[3], "LOW") == 0){
-        value = 2;
-    }
-    else {
-        perror("Wrong value entered\n");
-        return -1;
-    }
-    printf("Value to send: %d\n\n", value);
+    
     
     if ((fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY)) < 0) {
         perror("UART: Failed to open the fd.\n");
@@ -42,7 +51,7 @@ int main(int argc, char *argv[]) {
     struct termios options;
     tcgetattr(fd, &options);
 
-    options.c_cflag = B9600 | CS8 | CREAD | CLOCAL;
+    options.c_cflag = B115200 | CS8 | CREAD | CLOCAL;
     options.c_iflag = IGNPAR | ICRNL;
     cfmakeraw(&options);
 
@@ -58,7 +67,23 @@ int main(int argc, char *argv[]) {
             break;
 
         case 'w':
-            writeSingleRegister(fd, device, 0x01, value);
+            writeSingleRegister(fd, device, 0, value);
+            break;
+
+        case 'p':
+            writeSingleRegister(fd, device, 0, preoperational_cmd);
+            break;
+
+        case 's':
+            writeSingleRegister(fd, device, 0, set_cmd);
+            break;
+
+        case 'S':
+            writeSingleRegister(fd, device, 0, stop_cmd);
+            break;
+
+        case 'R':
+            writeSingleRegister(fd, device, 0, reset_cmd);
             break;
 
         default:

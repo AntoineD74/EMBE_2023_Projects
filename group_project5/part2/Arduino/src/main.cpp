@@ -78,7 +78,7 @@ uint8_t verifyCrc(char* packet, size_t length) {
     return 0;
 }
 
-void read_msg(uint8_t msg[]) {
+void read_receive(uint8_t msg[]) {
     //get registers count
     uint8_t count_higher, count_lower;
     count_higher = int(msg[4]);
@@ -92,20 +92,31 @@ void read_msg(uint8_t msg[]) {
     uint16_t first_register = register_higher << 8 | register_lower;
 
     pinMode(PD1, OUTPUT);
-    if(first_register == 1 && register_count == 1){
-        uint8_t packet[7] = {MODBUS_ADDRESS, 3, static_cast<uint8_t>(register_count * 2), 0, ledState, 0, 0};
+    if(first_register == 1 && register_count == 1)
+    {
+        uint8_t packet[7] = {
+            MODBUS_ADDRESS,
+            uint8_t(3),
+            uint8_t(register_count*2),
+            uint8_t(0),
+            ledState,
+            0,
+            0
+        };
+        
         setCrc(packet,sizeof(packet));
-        Serial.write(packet, sizeof(packet));
+
+        // Serial.write(packet, sizeof(packet));
     }
     else{
         //fail
         char packet[2] = {'\x83', '\x02'};
-        Serial.write(packet);
+        // Serial.write(packet);
     }
     pinMode(PD1, INPUT);
 }
 
-void write_msg(uint8_t msg[]) {    
+void write_receive(uint8_t msg[]) {    
     // Get value register
     uint8_t value_higher, value_lower;
     value_higher = int(msg[4]);
@@ -125,9 +136,18 @@ void write_msg(uint8_t msg[]) {
             ledState = register_value;
 
             Serial.println("Changing Led state");
-            digitalWrite(led, ledState);       
+            digitalWrite(led, ledState);  
 
-            uint8_t packet[MSG_LEN] = {1, uint8_t(6), register_higher, register_lower, uint8_t(0), ledState, 0, 0};
+            uint8_t packet[MSG_LEN] = {
+                MODBUS_ADDRESS,
+                uint8_t(6),
+                register_higher,
+                register_lower,
+                uint8_t(0),
+                ledState,
+                0,
+                0
+            };
             setCrc(packet,sizeof(packet));
             Serial.write(packet, sizeof(packet));
         }
@@ -148,8 +168,8 @@ void write_msg(uint8_t msg[]) {
 void setup(){
     Serial.println("Booting...");
 
-   // baud rate of 9600 (8-bit with No parity and 1 stop bit)
-    Serial.begin(9600, SERIAL_8N1);
+   // baud rate of 115200 (8-bit with No parity and 1 stop bit)
+    Serial.begin(115200, SERIAL_8N1);
     
     pinMode(led, OUTPUT);   
     pinMode(PD1, OUTPUT);
@@ -168,30 +188,29 @@ void loop()
         
         uint8_t slave_number;
         slave_number = uint8_t(msg[0]);
-
         if (slave_number == MODBUS_ADDRESS) // If the command is adressed to us
         {
             Serial.println("Command received");
 
             if(handle_crc(msg) == true){
                 uint8_t function_number;
-                function_number = uint8_t(msg[1]);  // get the function -> read or write
+                function_number = uint8_t(msg[1]);
                 
                 if(function_number == 03){
-                    read_msg(msg);
+                    read_receive(msg);
                 }
                 else if(function_number == 06){
-                    write_msg(msg);
+                    write_receive(msg);
                 }
                 else{
                     char packet[2] = {'\x80', '\x01'};
-                    Serial.write(packet);
+                    // Serial.write(packet);
                 }
             }
             else{
                 Serial.println("Error command");
                 char packet[2] = {'\x80', '\x03'};
-                Serial.write(packet);
+                // Serial.write(packet);
             }         
         }
     }

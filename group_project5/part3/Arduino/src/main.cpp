@@ -1,13 +1,6 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-#include "encoder.h"
-#include "StateManager.h"
-#include "InitializationState.h"
-#include "Operational.h"
-#include "PreOperational.h"
-#include "StoppedState.h"
-
 #ifndef MODBUS_ADDRESS
 #define MODBUS_ADDRESS 1
 #endif
@@ -18,28 +11,8 @@
 #define LOWER_8(x) (x & 0xff)
 #define MAKE_16(higher, lower) (((uint16_t)higher << 8) | (uint16_t)lower)
 
-Encoder encoder(2, 3); //c1: D2, c2: D3
-StateManager *stateManager_;
-
 int led = 13; // LED with PWM brightness control
 uint8_t ledState = 0;
-
-//speed measurement 
-bool c1_hi = false;
-bool clockwise = false;
-uint32_t number_us = 0;
-int time_between_pulses = 0;
-double speed_secpulse = 0;
-
-// Update rate
-int updatePeriod = 10;  //10*10 us
-int updateMsCounter = 0;
-bool updatePwm = false;
-
-//led
-int ledCounter = 0;
-int blinkingPeriod = 48; //48*21ms = 1008 s => 1Hz
-bool changeLedState = false;
 
 // Compute the MODBUS RTU CRC
 uint16_t ModRTU_CRC(uint8_t buf[], int len)
@@ -105,7 +78,7 @@ uint8_t verifyCrc(char* packet, size_t length) {
     return 0;
 }
 
-void read_msg(uint8_t msg[]) {
+void read_receive(uint8_t msg[]) {
     //get registers count
     uint8_t count_higher, count_lower;
     count_higher = int(msg[4]);
@@ -119,9 +92,20 @@ void read_msg(uint8_t msg[]) {
     uint16_t first_register = register_higher << 8 | register_lower;
 
     pinMode(PD1, OUTPUT);
-    if(first_register == 1 && register_count == 1){
-        uint8_t packet[7] = {MODBUS_ADDRESS, 3, static_cast<uint8_t>(register_count * 2), 0, ledState, 0, 0};
+    if(first_register == 1 && register_count == 1)
+    {
+        uint8_t packet[7] = {
+            MODBUS_ADDRESS,
+            uint8_t(3),
+            uint8_t(register_count*2),
+            uint8_t(0),
+            ledState,
+            0,
+            0
+        };
+        
         setCrc(packet,sizeof(packet));
+
         Serial.write(packet, sizeof(packet));
     }
     else{
@@ -132,7 +116,7 @@ void read_msg(uint8_t msg[]) {
     pinMode(PD1, INPUT);
 }
 
-void write_msg(uint8_t msg[]) {    
+void write_receive(uint8_t msg[]) {    
     // Get value register
     uint8_t value_higher, value_lower;
     value_higher = int(msg[4]);
@@ -152,9 +136,18 @@ void write_msg(uint8_t msg[]) {
             ledState = register_value;
 
             Serial.println("Changing Led state");
-            digitalWrite(led, ledState);       
+            digitalWrite(led, ledState);  
 
-            uint8_t packet[MSG_LEN] = {1, uint8_t(6), register_higher, register_lower, uint8_t(0), ledState, 0, 0};
+            uint8_t packet[MSG_LEN] = {
+                MODBUS_ADDRESS,
+                uint8_t(6),
+                register_higher,
+                register_lower,
+                uint8_t(0),
+                ledState,
+                0,
+                0
+            };
             setCrc(packet,sizeof(packet));
             Serial.write(packet, sizeof(packet));
         }
@@ -175,16 +168,14 @@ void write_msg(uint8_t msg[]) {
 void setup(){
     Serial.println("Booting...");
 
-   // baud rate of 9600 (8-bit with No parity and 1 stop bit)
-    Serial.begin(9600, SERIAL_8N1);
+   // baud rate of 115200 (8-bit with No parity and 1 stop bit)
+    Serial.begin(115200, SERIAL_8N1);
     
     pinMode(led, OUTPUT);   
     pinMode(PD1, OUTPUT);
 
     digitalWrite(PD1, LOW);
     digitalWrite(led, LOW);
-
-    stateManager_ = new StateManager();
 }
 
 void loop()
@@ -197,42 +188,46 @@ void loop()
         
         uint8_t slave_number;
         slave_number = uint8_t(msg[0]);
-
         if (slave_number == MODBUS_ADDRESS) // If the command is adressed to us
         {
             Serial.println("Command received");
 
             if(handle_crc(msg) == true){
                 uint8_t function_number;
-                function_number = uint8_t(msg[1]);  // get the function -> read or write
+                function_number = uint8_t(msg[1]);
 
                 switch (function_number)
                 {
                     case 03:
-                        read_msg(msg);
+                        read_receive(msg);
                         break;
 
                     case 06:
-                        write_msg(msg);
+                        write_receive(msg);
                         break;
 
                     case 01:
-                        stateManager_->receive_command('s');    // set state
+                        // stateManager_->receive_command('s');    // set state
+                        Serial.println("s");
                         break;
 
                     case 02:
-                        stateManager_->receive_command('S');    // Stop state
+                        // stateManager_->receive_command('S');    // Stop state
+                        Serial.println("S");
                         break;
 
                     case 80:
-                        stateManager_->receive_command('p');    // pre-operationel state
+                        // stateManager_->receive_command('p');    // pre-operationel state
+                        Serial.println("p");
                         break;
 
                     case 81:
-                        stateManager_->receive_command('r');    // reset state
+                        // stateManager_->receive_command('r');    // reset
+                        Serial.println("s");
                         break;
 
                     case 82:    // reset communication
+                        Serial.println("reset com");
                         break;
                     
                     default:
@@ -250,43 +245,3 @@ void loop()
     }
 }
 
-ISR (INT0_vect)
-{
-  c1_hi = true;
-  time_between_pulses = number_us;
-  number_us = 0;
-  if(!encoder.is_C2_hi())
-  {
-    clockwise = true;
-  }
-}
-
-//Timer2: Manage update rate
-ISR (TIMER2_COMPA_vect)
-{
-  number_us++;
-  updateMsCounter++;
-
-  if(updateMsCounter >= updatePeriod){
-    updatePwm = true;
-    updateMsCounter = 0;
-  }
-}
-
-//Timer1: PWM + led management
-ISR(TIMER1_COMPA_vect) {
-  stateManager_->motor.pin.set_hi();
-  ledCounter++;
-
-  if(ledCounter == blinkingPeriod){
-    changeLedState = true;
-    ledCounter = 0;
-  }
-  else if (blinkingPeriod == 0){
-    ledCounter = 0;
-  }
-}
-
-ISR(TIMER1_COMPB_vect) {
-  stateManager_->motor.pin.set_lo();
-}
