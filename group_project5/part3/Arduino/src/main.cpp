@@ -1,6 +1,17 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include "motor_controller.h"
+#include "encoder.h"
+
+#include "StateManager.h"
+#include "InitializationState.h"
+#include "Operational.h"
+#include "PreOperational.h"
+#include "StoppedState.h"
+
 #ifndef MODBUS_ADDRESS
 #define MODBUS_ADDRESS 1
 #endif
@@ -13,6 +24,29 @@
 
 int led = 13; // LED with PWM brightness control
 uint8_t ledState = 0;
+
+Encoder encoder(2, 3); //c1: D2, c2: D3
+
+//speed measurement 
+bool c1_hi = false;
+bool clockwise = false;
+uint32_t number_us = 0;
+int time_between_pulses = 0;
+double speed_secpulse = 0;
+
+// Update rate
+int updatePeriod = 10;  //10*10 us
+int updateMsCounter = 0;
+bool updatePwm = false;
+
+//led
+int ledCounter = 0;
+int blinkingPeriod = 48; //48*21ms = 1008 s => 1Hz
+bool changeLedState = false;
+
+bool motorInOperation = false;
+
+StateManager *stateManager_;
 
 // Compute the MODBUS RTU CRC
 uint16_t ModRTU_CRC(uint8_t buf[], int len)
@@ -106,12 +140,12 @@ void read_receive(uint8_t msg[]) {
         
         setCrc(packet,sizeof(packet));
 
-        // Serial.write(packet, sizeof(packet));
+        Serial.write(packet, sizeof(packet));
     }
     else{
         //fail
         char packet[2] = {'\x83', '\x02'};
-        // Serial.write(packet);
+        Serial.write(packet);
     }
     pinMode(PD1, INPUT);
 }
@@ -170,12 +204,16 @@ void setup(){
 
    // baud rate of 115200 (8-bit with No parity and 1 stop bit)
     Serial.begin(115200, SERIAL_8N1);
+
+    stateManager_ = new StateManager();
+    stateManager_->receive_command('S');
+    sei();
     
-    pinMode(led, OUTPUT);   
+    // pinMode(led, OUTPUT);   
     pinMode(PD1, OUTPUT);
 
     digitalWrite(PD1, LOW);
-    digitalWrite(led, LOW);
+    // digitalWrite(led, LOW);
 }
 
 void loop()
@@ -184,7 +222,7 @@ void loop()
 
     if (Serial.available() > 0) {        
         uint8_t msg[MSG_LEN];                            
-        Serial.readBytes(msg, MSG_LEN); // binary messages have fixed length and no terminating \0.
+        Serial.readBytes(msg, MSG_LEN);
         
         uint8_t slave_number;
         slave_number = uint8_t(msg[0]);
@@ -195,24 +233,122 @@ void loop()
             if(handle_crc(msg) == true){
                 uint8_t function_number;
                 function_number = uint8_t(msg[1]);
-                
-                if(function_number == 03){
-                    read_receive(msg);
-                }
-                else if(function_number == 06){
-                    write_receive(msg);
-                }
-                else{
-                    char packet[2] = {'\x80', '\x01'};
-                    // Serial.write(packet);
+
+                switch(function_number){
+
+                    case 03:
+                        read_receive(msg);
+                        break;
+
+                    case 06:
+                        write_receive(msg);
+                        break;
+
+                    case 01:
+                        stateManager_->receive_command('s');    //Set to operational state
+                        blinkingPeriod = stateManager_->get_blinking_period();
+                        motorInOperation = true;
+                        break;
+
+                    case 02:
+                        stateManager_->receive_command('S');    //Set to stop state
+                        blinkingPeriod = stateManager_->get_blinking_period();
+                        motorInOperation = false;
+                        break;
+
+                    case 80:
+                        stateManager_->receive_command('p');    //Set to preoperational state
+                        blinkingPeriod = stateManager_->get_blinking_period();
+                        motorInOperation = false;
+                        break;
+
+                    case 81:
+                        stateManager_->receive_command('r');    //Reset state
+                        blinkingPeriod = stateManager_->get_blinking_period();
+                        motorInOperation = false;
+                        break;
+                    
+                    case 82:
+                        //Reset communication
+                        break;
+
+                    default:
+                        char packet[2] = {'\x80', '\x01'};
+                        Serial.write(packet);
+                        break;
                 }
             }
             else{
                 Serial.println("Error command");
                 char packet[2] = {'\x80', '\x03'};
-                // Serial.write(packet);
+                Serial.write(packet);
             }         
         }
     }
+
+    if(motorInOperation){
+        //update speed if a new pulse is detected
+        if(c1_hi)
+        {
+            speed_secpulse = double{100000}/time_between_pulses;
+            stateManager_->motor.currentSpeed = speed_secpulse;
+
+            c1_hi = false;  //Turn flags down
+            clockwise = false;
+        }
+
+        if(updatePwm)
+        {
+            stateManager_->loopAction();
+            updatePwm = false;
+        }
+
+        if(changeLedState){
+            if(blinkingPeriod != 0){ stateManager_->led.toggle(); }
+            changeLedState = false;
+        } 
+    }
+}
+
+
+ISR (INT0_vect)
+{
+  c1_hi = true;
+  time_between_pulses = number_us;
+  number_us = 0;
+  if(!encoder.is_C2_hi())
+  {
+    clockwise = true;
+  }
+}
+
+//Timer2: Manage update rate
+ISR (TIMER2_COMPA_vect)
+{
+  number_us++;
+  updateMsCounter++;
+
+  if(updateMsCounter >= updatePeriod){
+    updatePwm = true;
+    updateMsCounter = 0;
+  }
+}
+
+//Timer1: PWM + led management
+ISR(TIMER1_COMPA_vect) {
+  stateManager_->motor.pin.set_hi();
+  ledCounter++;
+
+  if(ledCounter == blinkingPeriod){
+    changeLedState = true;
+    ledCounter = 0;
+  }
+  else if (blinkingPeriod == 0){
+    ledCounter = 0;
+  }
+}
+
+ISR(TIMER1_COMPB_vect) {
+  stateManager_->motor.pin.set_lo();
 }
 

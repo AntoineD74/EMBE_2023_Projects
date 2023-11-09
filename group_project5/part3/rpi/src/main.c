@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     printf("Command entered: %c\n", command);
     
     uint16_t value;
-    if (argc >= 3) {
+    if (argc >= 4) {
         if (strcmp(argv[3], "HIGH") == 0) {
             value = 1;
         }
@@ -71,19 +71,19 @@ int main(int argc, char *argv[]) {
             break;
 
         case 'p':
-            writeSingleRegister(fd, device, 0, preoperational_cmd);
+            writeStateMachineCommand(fd, device, preoperational_cmd, 0, 0);
             break;
 
         case 's':
-            writeSingleRegister(fd, device, 0, set_cmd);
+            writeStateMachineCommand(fd, device, set_cmd, 0, 0);
             break;
 
         case 'S':
-            writeSingleRegister(fd, device, 0, stop_cmd);
+            writeStateMachineCommand(fd, device, stop_cmd, 0, 0);
             break;
 
         case 'R':
-            writeSingleRegister(fd, device, 0, reset_cmd);
+            writeStateMachineCommand(fd, device, reset_cmd, 0, 0);
             break;
 
         default:

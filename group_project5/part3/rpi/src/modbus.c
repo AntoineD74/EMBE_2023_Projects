@@ -161,6 +161,84 @@ uint8_t writeSingleRegister(uint8_t fd, uint8_t address, uint16_t register_addre
     return 1;
 }
 
+uint8_t writeStateMachineCommand(uint8_t fd, uint8_t address, uint8_t command, uint16_t register_address, uint16_t value) {
+    uint16_t recv_address, recv_value;
+
+    char recv_packet[8];
+    char packet[8] = {(char)address,
+                      (char)command,
+                      (char)HIGHER_8(register_address),
+                      (char)LOWER_8(register_address),
+                      (char)HIGHER_8(value),
+                      (char)LOWER_8(value),
+                      0,
+                      0};
+
+    setCrc(packet, sizeof(packet));
+
+    printf("Sending packet: ");
+    printPacket(packet, sizeof(packet));
+
+    if (write(fd, packet, sizeof(packet)) != sizeof(packet)) {
+        perror("Failed to write write single register packet\n");
+        return -1;
+    }
+
+	usleep(10000);
+
+    if (read(fd, recv_packet, 1) != 1) {
+        perror("Failed to read unit address from received packet\n");
+        return -1;
+    }
+
+    if (recv_packet[0] != address) {
+        fprintf(stderr, "Response form wrong address. Expected: %02x, got: %02x\n", address, recv_packet[0]);
+        return -1;
+    }
+
+    if (read(fd, recv_packet + 1, 1) != 1) {
+        perror("Failed to read return code from received packet\n");
+        return -1;
+    }
+    
+    if (recv_packet[1] == '\x86') { // if error
+        return handleExceptionCode(fd, register_address, value);
+
+    } else if (recv_packet[1] == '\x06') {  // if success
+
+        if (read(fd, recv_packet + 2, 6) != 6) {
+            perror("Failed to read contents of received  "
+                "packet\n");
+            return -1;
+        }
+
+        recv_address = MAKE_16(recv_packet[2], recv_packet[3]);
+        recv_value = MAKE_16(recv_packet[4], recv_packet[5]);
+
+        if (recv_address != register_address) {
+            fprintf(stderr, "Recieved unexpected address after writeSingleRegister, "
+                    "received: %04x, expected: %04x\n",
+                    recv_address, register_address);
+            return 1;
+        }
+
+        if (recv_value != value) {
+            fprintf(stderr, "Recieved unexpected value after writeSingleRegister, "
+                    "received: %04x, expected: %04x\n",
+                    recv_value, value);
+            return 1;
+        }
+
+        printf("Recieved packet: ");
+        printPacket(recv_packet, sizeof(recv_packet));
+
+        return verifyCrc(recv_packet, sizeof(recv_packet));
+    }
+
+    fprintf(stderr, "Error: unexpected return code %d\n", recv_packet[0]);
+    return 1;
+}
+
 uint8_t handleExceptionCode(uint8_t fd, uint16_t first_argument, uint16_t second_argument) {
 
     uint8_t exception_code;

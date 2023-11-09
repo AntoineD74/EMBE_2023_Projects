@@ -3,73 +3,17 @@
 
 StateManager::StateManager() : state_(nullptr), currentStateIndex(0), blinking_period(0), motor(2, 1000), led(5)
 {
-  // MotorController ;
   
   led.init();
   motor.init(21);
-  // motor.set(0.0);
+  motor.set(0.0);
 
   this->transitionToState(new InitializationState);
   this->loopAction();
 
   this->transitionToState(new PreOperationalState);
   currentStateIndex = 1;
-
-  Serial.print("\nEnter a value for Kp: ");
-  char chars[20];
-  char character;
-  int i = 0;
-  while(1){
-    if(Serial.available())
-    {
-      character = Serial.read();
-      if(character == 13){ break; }
-      chars[i] = character;
-      i++;
-    }
-    if(i==20){ break; }
-  }
-  float kp = strtod(chars, nullptr);
-  Serial.println(kp);
-
-  Serial.print("Enter a value for Ti: ");
-  char chars2[20];
-  char character2;
-  int j = 0;
-  while(1){
-    if(Serial.available())
-    {
-      character2 = Serial.read();
-      if(character2 == 13){ break; }
-      chars2[j] = character2;
-      j++;
-    }
-    if(j==20){ break; }
-  }
-  float ti = strtod(chars2, nullptr);
-  Serial.println(ti);
-
-  Serial.print("Use integrated speed controller ? [y/n] : ");
-  char character3[2];
-  int k = 0;
-  while(1){
-    if(Serial.available())
-    {
-      character3[k] = Serial.read();
-      k++;
-      if(k == 3){ break; }
-    }
-  }
-  Serial.println(character3[1]);
-
-  if(character3[1] == 'y' || character3[1] == 'Y'){
-    motor.useIntegrated = true;
-  }
-  else {
-    motor.useIntegrated = false;
-  }
-
-  motor.speedController.changeParameters(kp, ti);
+  motor.useIntegrated = true;
 }
 
 StateManager::~StateManager(){
@@ -109,65 +53,11 @@ void StateManager::receive_command(char cmd)
       this->loopAction();
       currentStateIndex = 1;
       blinking_period = 48; //1Hz
-
-      Serial.print("\nEnter a value for Kp: ");
-      char chars[20];
-      char character;
-      int i = 0;
-      while(1){
-        if(Serial.available())
-        {
-          character = Serial.read();
-          if(character == 13){ break; }
-          chars[i] = character;
-          i++;
-        }
-        if(i==20){ break; }
-      }
-      double kp = strtod(chars, nullptr);
-      Serial.println(kp);
-
-      Serial.print("Enter a value for Ti: ");
-      char chars2[20];
-      char character2;
-      int j = 0;
-      while(1){
-        if(Serial.available())
-        {
-          character2 = Serial.read();
-          if(character2 == 13){ break; }
-          chars2[j] = character2;
-          j++;
-        }
-        if(j==20){ break; }
-      }
-      double ti = strtod(chars2, nullptr);
-      Serial.println(ti);
-
-      Serial.print("Use integrated speed controller ? [y/n] : ");
-      char character3[2];
-      int m = 0;
-      while(1){
-        if(Serial.available())
-        {
-          character3[m] = Serial.read();
-          m++;  
-        }
-        if(m == 3){ break; }
-      }
-      Serial.println(character3[1]);
-
-      if(character3[1] == 'y' || character3[1] == 'Y'){
-        motor.useIntegrated = true;
-      }
-      else {
-        motor.useIntegrated = false;
-      }
-
-      motor.speedController.changeParameters(kp, ti);
     }
     
     else if (cmd == 'S'){
+      motor.set(0.0);
+      motor.brake();
       this->transitionToState(new StoppedState);
       currentStateIndex = 3;
       blinking_period = 24; //2Hz
@@ -180,61 +70,6 @@ void StateManager::receive_command(char cmd)
       currentStateIndex = 1;
       blinking_period = 48; //1Hz
 
-      Serial.print("\nEnter a value for Kp: ");
-      char chars[20];
-      char character;
-      int i = 0;
-      while(1){
-        if(Serial.available())
-        {
-          character = Serial.read();
-          if(character == 13){ break; }
-          chars[i] = character;
-          i++;
-        }
-        if(i==20){ break; }
-      }
-      double kp = strtod(chars, nullptr);
-      Serial.println(kp);
-
-      Serial.print("Enter a value for Ti: ");
-      char chars2[20];
-      char character2;
-      int j = 0;
-      while(1){
-        if(Serial.available())
-        {
-          character2 = Serial.read();
-          if(character2 == 13){ break; }
-          chars2[j] = character2;
-          j++;
-        }
-        if(j==20){ break; }
-      }
-      double ti = strtod(chars2, nullptr);
-      Serial.println(ti);
-
-      Serial.print("Use integrated speed controller ? [y/n] : ");
-      char character3[2];
-      int m = 0;
-      while(1){
-        if(Serial.available())
-        {
-          character3[m] = Serial.read();
-          m++;  
-        }
-        if(m == 3){ break; }
-      }
-      Serial.println(character3[1]);
-
-      if(character3[1] == 'y' || character3[1] == 'Y'){
-        motor.useIntegrated = true;
-      }
-      else {
-        motor.useIntegrated = false;
-      }
-
-      motor.speedController.changeParameters(kp, ti);
     }
 
     else{
