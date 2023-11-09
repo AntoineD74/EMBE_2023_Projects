@@ -106,12 +106,12 @@ void read_receive(uint8_t msg[]) {
         
         setCrc(packet,sizeof(packet));
 
-        Serial.write(packet, sizeof(packet));
+        // Serial.write(packet, sizeof(packet));
     }
     else{
         //fail
         char packet[2] = {'\x83', '\x02'};
-        Serial.write(packet);
+        // Serial.write(packet);
     }
     pinMode(PD1, INPUT);
 }
@@ -195,51 +195,22 @@ void loop()
             if(handle_crc(msg) == true){
                 uint8_t function_number;
                 function_number = uint8_t(msg[1]);
-
-                switch (function_number)
-                {
-                    case 03:
-                        read_receive(msg);
-                        break;
-
-                    case 06:
-                        write_receive(msg);
-                        break;
-
-                    case 01:
-                        // stateManager_->receive_command('s');    // set state
-                        Serial.println("s");
-                        break;
-
-                    case 02:
-                        // stateManager_->receive_command('S');    // Stop state
-                        Serial.println("S");
-                        break;
-
-                    case 80:
-                        // stateManager_->receive_command('p');    // pre-operationel state
-                        Serial.println("p");
-                        break;
-
-                    case 81:
-                        // stateManager_->receive_command('r');    // reset
-                        Serial.println("s");
-                        break;
-
-                    case 82:    // reset communication
-                        Serial.println("reset com");
-                        break;
-                    
-                    default:
-                        char packet[2] = {'\x80', '\x01'};
-                        Serial.write(packet);
-                        break;
+                
+                if(function_number == 03){
+                    read_receive(msg);
+                }
+                else if(function_number == 06){
+                    write_receive(msg);
+                }
+                else{
+                    char packet[2] = {'\x80', '\x01'};
+                    // Serial.write(packet);
                 }
             }
             else{
                 Serial.println("Error command");
                 char packet[2] = {'\x80', '\x03'};
-                Serial.write(packet);
+                // Serial.write(packet);
             }         
         }
     }

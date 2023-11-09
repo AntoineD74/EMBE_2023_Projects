@@ -27,8 +27,8 @@ int main(int argc, char *argv[]) {
     unsigned char command = argv[2][0];
     printf("Command entered: %c\n", command);
     
-    uint16_t value = 0;
-    if (argc >= 4) {
+    uint16_t value;
+    if (argc >= 3) {
         if (strcmp(argv[3], "HIGH") == 0) {
             value = 1;
         }
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
             break;
 
         case 'w':
-            writeSingleRegister(fd, device, 0, value);
+            writeSingleRegister(fd, device, 0x01, value);
             break;
 
         case 'p':
