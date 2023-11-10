@@ -286,13 +286,15 @@ void loop()
 
     if(motorInOperation){
         //update speed if a new pulse is detected
-        if(c1_hi)
-        {
+        if(c1_hi){
             speed_secpulse = double{100000}/time_between_pulses;
             stateManager_->motor.currentSpeed = speed_secpulse;
 
             c1_hi = false;  //Turn flags down
             clockwise = false;
+
+            String speedString = String(speed_secpulse);
+            Serial.println(speedString);
         }
 
         if(updatePwm){

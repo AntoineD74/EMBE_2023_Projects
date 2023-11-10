@@ -17,6 +17,8 @@
 #define reset_cmd 0x81
 #define reset_communications_cmd 0x82
 
+bool motorInOperation = false;
+
 int main(int argc, char *argv[]) {
     int fd;
     char response_buffer[2] = {0};
@@ -72,18 +74,22 @@ int main(int argc, char *argv[]) {
 
         case 'p':
             writeStateMachineCommand(fd, device, preoperational_cmd, 0, 0);
+            motorInOperation = false;
             break;
 
         case 's':
             writeStateMachineCommand(fd, device, set_cmd, 0, 0);
+            motorInOperation = true;
             break;
 
         case 'S':
             writeStateMachineCommand(fd, device, stop_cmd, 0, 0);
+            motorInOperation = false;
             break;
 
         case 'R':
             writeStateMachineCommand(fd, device, reset_cmd, 0, 0);
+            motorInOperation = false;
             break;
 
         default:
@@ -91,6 +97,30 @@ int main(int argc, char *argv[]) {
             return -1;
     }
 
+    
+
+    if(motorInOperation){   // Print current motor speed sent by the Arduino
+
+        while (true) {
+
+            usleep(1000);   // wait 1us
+
+            char buffer[10];
+            uint16_t speedReceived = 0;
+            int bytesRead = read(fd, buffer, sizeof(buffer) - 1);
+            
+            if (bytesRead > 0) {
+                buffer[bytesRead] = '\0';  // Null-terminate the string
+                int speedReceived = atoi(buffer);
+                
+                if (speedReceived != 0) {
+                    printf("Current motor speed: %d\n", speedReceived);
+                }
+            }
+        }
+    }
+    
+    
     close(fd);
 
     return 0;
