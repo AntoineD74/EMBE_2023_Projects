@@ -206,7 +206,6 @@ void setup(){
     Serial.begin(115200, SERIAL_8N1);
 
     stateManager_ = new StateManager();
-    stateManager_->receive_command('S');
     sei();
     
     // pinMode(led, OUTPUT);   
@@ -285,6 +284,7 @@ void loop()
     }
 
     if(motorInOperation){
+        
         //update speed if a new pulse is detected
         if(c1_hi){
             speed_secpulse = double{100000}/time_between_pulses;
@@ -294,7 +294,10 @@ void loop()
             clockwise = false;
 
             String speedString = String(speed_secpulse);
-            Serial.println(speedString);
+            Serial.println(speedString);    //Sending the speed to the raspberry
+
+            // String pwm = String(l);
+            // Serial.println(pwm);  
         }
 
         if(updatePwm){

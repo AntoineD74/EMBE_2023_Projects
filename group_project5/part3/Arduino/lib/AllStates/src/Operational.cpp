@@ -7,6 +7,6 @@ void OperationalState::on_entry() {
 
 void OperationalState::action_looped(MotorController *motor){
   motor->updatePwm();
-  Serial.println(motor->currentSpeed);
+  // Serial.println(motor->currentSpeed);
   // Serial.println(motor->speedController.updatePwm( motor->currentSpeed));
 }
