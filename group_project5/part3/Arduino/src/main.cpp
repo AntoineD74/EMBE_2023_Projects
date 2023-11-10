@@ -296,8 +296,9 @@ void loop()
             String speedString = String(speed_secpulse);
             Serial.println(speedString);    //Sending the speed to the raspberry
 
-            // String pwm = String(l);
-            // Serial.println(pwm);  
+            // double pwmValue = stateManager_->motor.speedController.updatePwm(speed_secpulse);
+            // String pwmString = String(pwmValue, 2); //Sending the pwm to the raspberry
+            // Serial.println(pwmString); 
         }
 
         if(updatePwm){

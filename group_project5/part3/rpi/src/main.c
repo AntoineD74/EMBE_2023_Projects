@@ -112,11 +112,17 @@ int main(int argc, char *argv[]) {
             if (bytesRead > 0) {
                 buffer[bytesRead] = '\0';  // Null-terminate the string
                 int speedReceived = atoi(buffer);
-                
+
                 if (speedReceived != 0) {
                     printf("Current motor speed: %d\n", speedReceived);
                 }
             }
+
+            // if (bytesRead > 0) {
+            //     buffer[bytesRead] = '\0';  // Null-terminate the string
+            //     double pwmReceived = strtod(buffer, NULL);
+            //     printf("Received PWM value: %.2f\n", pwmReceived);
+            // }
         }
     }
     
