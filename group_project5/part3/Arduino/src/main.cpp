@@ -218,8 +218,6 @@ void setup(){
 
 void loop()
 {
-    static_assert(MODBUS_ADDRESS != -1, "Modbus is not available");
-
     if (Serial.available() > 0) {        
         uint8_t msg[MSG_LEN];                            
         Serial.readBytes(msg, MSG_LEN);
@@ -297,8 +295,7 @@ void loop()
             clockwise = false;
         }
 
-        if(updatePwm)
-        {
+        if(updatePwm){
             stateManager_->loopAction();
             updatePwm = false;
         }

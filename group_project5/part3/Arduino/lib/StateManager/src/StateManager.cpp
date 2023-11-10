@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <StateManager.h>
 
-StateManager::StateManager() : state_(nullptr), currentStateIndex(0), blinking_period(0), motor(2, 1000), led(5)
+StateManager::StateManager() : state_(nullptr), currentStateIndex(0), blinking_period(0), motor(2, 800), led(5)
 {
   
   led.init();
